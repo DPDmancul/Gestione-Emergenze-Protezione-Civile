@@ -1,0 +1,30 @@
+<div class="modal-header">
+    <h3 class="modal-title">Impostazioni</h3>
+</div>
+<div class="modal-body row">
+  <div class="col-12 col-offset-1 col-md-6 col-md-offset-0 padding">
+    <div class="input-group" style="width:100%">
+      <span class="input-group-addon">Nome gruppo</span><input class="form-control" ng-change="edit('Gruppo')" ng-model="data.Gruppo.val" type="text">
+      <span class="input-group-btn"><button title="Salva impostazione" class="btn btn-{{data.Gruppo.saved?'secondary':'primary'}}" ng-disabled="data.Gruppo.saved" type="button" ng-click="set('Gruppo')">
+        <span class="glyphicon glyphicon-floppy-disk"></span>
+      </button></span>
+    </div>
+  </div>
+  <div class="col-12 col-offset-1 col-md-6 col-md-offset-0 padding">
+    <button style="width:100%" title="Ogni volta che si aprirà l'applicazione si troverà la mappa in questo punto" class="btn btn-default" type="button" ng-click="set_map()">Imposta vista attuale della mappa come default <span class="glyphicon glyphicon-floppy-disk"></span>
+    </button>
+  </div>
+  <!--BACKUP-->
+  <div class="col-12 col-offset-1 col-md-6 col-md-offset-0 padding">
+    <button style="width:100%" title="Salva Backup" class="btn btn-default" type="button" ng-click="do_backup()"><span class="glyphicon glyphicon-hdd"></span> Salva Backup
+    </butston>
+  </div>
+  <div class="col-12 col-offset-1 col-md-6 col-md-offset-0 padding">
+    <button style="width:100%" title="Importa backup nel database" class="btn btn-default" type="button" ng-click="restore_backup()"><span class="glyphicon glyphicon-import"></span> Ripristina backup
+    </button>
+  </div>
+</div>
+<div class="modal-footer">
+  <!--button class="btn btn-warning" type="button" ng-click="cancel()">Annulla</button-->
+  <button class="btn btn-primary" type="button" ng-click="ok()">Chiudi</button>
+</div>

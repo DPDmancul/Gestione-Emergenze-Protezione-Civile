@@ -1,0 +1,82 @@
+<html ng-app="InitSettings">
+<head>
+  <meta charset="UTF-8" />
+  <title>Configurazione iniziale</title>
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="../node_modules/ui-select/dist/select.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body style="background-color: rgb(255, 178, 62);overflow:hidden" ng-controller="InitController">
+
+  <form name="initForm">
+    <div clas="row" style="position:absolute;top:0;left:0;width:100%;z-index:2">
+      <div class="col-xs-9 col-xs-offset-1 col-md-6 col-md-offset-3 padding">
+        <div class="input-group" style="width:100%">
+          <span class="input-group-addon">Nome gruppo</span>
+          <input class="form-control" ng-model="data.Gruppo" type="text" required>
+        </div>
+      </div>
+      <div class="col-xs-9 col-xs-offset-1 col-md-6 col-md-offset-3 padding">
+        <div class="input-group" style="width:100%">
+            <span class="input-group-addon">Centrare la mappa:</span>
+            <input style="font-size:7pt" class="form-control" disabled value="{{data.center.lng}};{{data.center.lat}}" type="text" required>
+            <span class="input-group-addon"><small></mall>zoom</small></span>
+            <input class="form-control" ng-model="data.center.zoom" type="number" min="12" max="17" ng-min="12" ng-max="17" required>
+        </div>
+      </div>
+    </div>
+    <!--MAPE-->
+    <div class="row fill no-padding">
+      <leaflet id="mainMap" defaults="defaults" maxbounds="maxbounds" lf-center="data.center" height="100%" width="100%"></leaflet>
+    </div>
+    <!--SAVE-->
+    <div class="row" style="position:absolute;bottom:0;left:0;width:100%">
+      <div class="col-xs-10 col-xs-offset-1 col-md-6 col-md-offset-3 padding">
+        <button ng-disabled="initForm.$invalid" ng-click="send()" style="width:100%" title="Salva" class="btn btn-default" type="button" ng-click="do_backup()"><span class="glyphicon glyphicon-ok"></span> Salva impostazioni
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    require('angular-simple-logger')
+    require('angular-ui-bootstrap')
+    require('leaflet')
+    require('ui-leaflet')
+    const remote = require('electron').remote
+    const db = remote.getGlobal('db')
+    var app = angular.module('InitSettings', ['nemLogging','ui-leaflet','ui.bootstrap'])
+
+    app.controller("InitController", function($scope) {
+      $scope.maxbounds={
+        southWest: {
+          lat: 45.5275,
+          lng: 11.7279
+        },
+        northEast: {
+          lat: 46.6984,
+          lng: 14.5184
+        }
+      }
+      $scope.defaults= {
+        maxZoom: 17,
+        minZoom: 12,
+        attributionControl: false,
+        tileLayer: '../stradale/{z}/{x}/{y}.png'
+      }
+
+      $scope.data={Gruppo:'',center:{zoom:12,lng:null,lat:null}}
+
+      $scope.send=()=>{
+        db.set_pref('Gruppo',$scope.data.Gruppo)
+        db.set_pref('zoom',$scope.data.center.zoom)
+        db.set_pref('lng',$scope.data.center.lng)
+        db.set_pref('lat',$scope.data.center.lat)
+				const window = remote.getCurrentWindow()
+				window.destroy()//close()
+      }
+    })
+  </script>
+</body>
+</html>

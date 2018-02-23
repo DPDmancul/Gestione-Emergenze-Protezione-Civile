@@ -1,0 +1,29 @@
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Inserimeto credenziali MySql</title>
+</head>
+<body style="background-color: lightblue;text-align:center">
+  La connessione con il databse è stata persa
+  <ol>
+    <li>Controlla che MySql sia aperto</li>
+    <li>Controlla che le credenziali siano corrette</li>
+  </ol>
+  Credenziali:
+  <form id="form" style="margin: 0 auto;width: 300px">
+    <table>
+      <tr><td>Host:</td><td><input name="host" placeholder="localhost" value="127.0.0.1" type="text"></td></tr>
+      <tr><td>Port:</td><td><input name="port" placeholder="3306" value="3306" type="text"></td></tr>
+      <tr><td>Username:</td><td><input name="user" placeholder="root" type="text"></td></tr>
+      <tr><td>Password:</td><td><input name="password" placeholder="password" type="password"></td></tr>
+      <tr><td style="text-align:center" colspan="2"><input onclick="send()" value="Connetti" type="button"></td></tr>
+    </table>
+  </form>
+  Gestione Emergenze Protezione Civile | Configurazione iniziale
+  <script>
+    const db = require('electron').remote.getGlobal('db')
+    form = document.getElementById('form')
+    function send(){db.setAuth(form.host.value,form.user.value,form.password.value,form.port.value)}
+  </script>
+</body>
+</html>

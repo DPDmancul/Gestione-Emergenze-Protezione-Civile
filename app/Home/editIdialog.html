@@ -1,0 +1,60 @@
+<div class="modal-header">
+    <h3 class="modal-title">Modifica intervento</h3>
+</div>
+<div class="modal-body">
+  <form novalidate name="editIform">
+    <div class="form-group">
+      <label for="Iname">Intervento</label>
+      <input disabled="true" type="input" class="form-control" ng-model="formI.nome">
+    </div>
+    <div class="form-group">
+      <label for="Iname">Emergenza</label>
+      <input disabled="true" type="input" class="form-control" required ng-model="formI.emergenza">
+    </div>
+    <div class="form-group">
+      <label for="Iname">Tipo intervento</label>
+      <ui-select required ng-model="formI.tipo">
+        <ui-select-match>
+          <span data-old-ng-bind="tipi[formI.tipo-1].nome" ng-bind="formI.tipo.nome"></span>
+        </ui-select-match>
+        <ui-select-choices repeat="value in tipi | filter:elencabile | filter:$select.search | orderBy:value.nome:false:putAltroEnd track by $index">
+          <span ng-bind="value.nome"></span>
+        </ui-select-choices>
+      </ui-select>
+      <input required ng-if="formI.tipo.id==0" type="input" class="form-control" ng-model="formI.altro" placeholder="specificare altro tipo">
+    </div>
+    <input required type="input" class="form-control" ng-model="formI.indirizzo" placeholder="Indirizzo"><br>
+    <input required type="input" class="form-control" id="Iname" ng-model="formI.contatto" placeholder="Contatto"><br>
+    <div class="form-group">
+      <label for="Iname">Volontari</label>
+      <ui-select on-remove="remove(0,$item.id)" on-select="add(0,$item.id)" multiple ng-model="res.volontari" >
+        <ui-select-match placeholder="Volontari">{{$item.nome}}</ui-select-match>
+        <ui-select-choices repeat="value in volontari | filter:elencabile | filter:$select.search track by $index">
+          {{value.nome}}
+        </ui-select-choices>
+      </ui-select>
+    </div>
+    <div class="form-group">
+      <label for="Iname">Attrezzatura</label>
+      <ui-select on-remove="remove(1,$item.id)" on-select="add(1,$item.id)" multiple ng-model="res.attrezzatura">
+        <ui-select-match placeholder="Attrezzatura">{{$item.nome}}</ui-select-match>
+        <ui-select-choices repeat="value in attrezzatura | filter:elencabile |  filter:$select.search track by $index">
+          {{value.nome}}
+        </ui-select-choices>
+      </ui-select>
+    </div>
+    <div class="form-group">
+      <label for="Iname">Mezzi</label>
+      <ui-select on-remove="remove(2,$item.id)" on-select="add(2,$item.id)" multiple ng-model="res.mezzi" >
+        <ui-select-match placeholder="Mezzi">{{$item.nome}}</ui-select-match>
+        <ui-select-choices repeat="value in mezzi | filter:elencabile | filter:$select.search track by $index">
+          {{value.nome}}
+        </ui-select-choices>
+      </ui-select>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <button class="btn btn-warning" type="button" ng-click="cancel()">Annulla</button>
+  <button class="btn btn-success" ng-disabled="editIform.$invalid" type="button" ng-click="save()">Salva</button>
+</div>

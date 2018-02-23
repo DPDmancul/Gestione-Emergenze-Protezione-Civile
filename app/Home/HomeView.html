@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html ng-app="GestioneEmergenze">
+  <head>
+    <meta charset="UTF-8">
+    <title>Gestione Emergenze | Protezione Civile</title>
+    <link rel="stylesheet" href="../../css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../../node_modules/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="../../node_modules/ui-select/dist/select.css" />
+    <link rel="stylesheet" href="../../css/style.css" />
+
+  </head>
+  <body ng-controller="HomeController">
+    <div ng-show="storicoView" style="position:absolute;background-color:white;width:100%;height:100%;z-index:1001">
+      <!--gulp:insert(STORICO)-->
+    </div>
+    <div class="container-fluid fill">
+      <div class="row fill">
+        <div style="background-color:Window/*Frame*/" class="col-xs-12 col-sm-4 col-md-4 col-lg-3 fill scroll padding">
+          <!-- Barra laterale -->
+          <div class="row padding" ng-if="!newI&&MOVER.id===false">
+            <button type="button" ng-click="addEmergency()" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> emergenza</button>
+            <button type="button" ng-click="addIntervento()" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span>  intervento</button>
+          </div>
+          <div class="row padding" ng-if="newI">
+            <button type="button" ng-click="cancelIntervento()" class="btn btn-warning">Annulla</button>
+            <button type="button" ng-disabled="newIform.$invalid" ng-click="saveIntervento()" class="btn btn-success">Crea</button>
+          </div>
+          <div class="row padding" ng-if="MOVER.id!==false">
+            <button type="button" ng-click="saveMoveI(false)" class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span> Annulla</button>
+            <button type="button" ng-click="saveMoveI(true)" class="btn btn-success"><span class="glyphicon glyphicon-save"></span> Salva</button>
+          </div>
+          <uib-accordion close-others="true" ng-hide="newI||MOVER.id!==false">
+            <uib-accordion-group heading="{{e.nome}} - {{e.data | amDateFormat:'LL'}}" ng-repeat="e in emergenze track by $index">
+              <dl>
+                <a ng-repeat="i in e.interventi" ng-click="gotoi(e.id+'@'+i.id)" ng-class="{gray : i.fine!=-1}">
+                  <dt>
+                    {{i.nome}} - {{i.seg | amDateFormat:'LL'}}
+                  </dt>
+                  <dd>
+                    {{i.indirizzo}}
+                  </dd>
+                </a>
+              </dl>
+              <button type="button" ng-click="closeEmergency($index)" class="btn btn-warning padding"><span class="glyphicon glyphicon-flag"></span>  Chiudi emergenza</button>
+            </uib-accordion-group>
+          </uib-accordion>
+          <form novalidate name="newIform" ng-show="newI">
+            <div class="form-group">
+              <label for="Iname">Intervento</label>
+              <input required type="input" class="form-control" id="Iname" ng-model="formI.nome" placeholder="Nome intervento">
+            </div>
+            <div class="form-group">
+              <label for="Iname">Emergenza <button type="button" ng-click="addEmergency()" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> emergenza</button></label>
+              <ui-select required ng-model="formI.emergenza">
+                <ui-select-match>
+                  <span ng-bind="$select.selected.nome"></span>
+                </ui-select-match>
+                <ui-select-choices repeat="item in emergenze | filter: {nome:$select.search} track by item.id">
+                  <span ng-bind="item.nome"></span><small> - {{item.data|amDateFormat:'LL'}}</small>
+                </ui-select-choices>
+              </ui-select>
+            </div>
+            <div class="form-group">
+              <label for="Iname">Tipo intervento</label>
+              <ui-select required ng-model="formI.tipo">
+                <ui-select-match>
+                  <span ng-bind="$select.selected.value.nome"></span>
+                </ui-select-match>
+                <ui-select-choices repeat="(id,value) in tipi | filter:elencabile | filter:$select.search | orderBy:value.nome:false:putAltroEnd track by $index">
+                  <span ng-bind="value.value.nome"></span>
+                </ui-select-choices>
+              </ui-select>
+              <input required ng-if="formI.tipo.id==0" type="input" class="form-control" ng-model="formI.altro" placeholder="specificare altro tipo">
+            </div>
+            <input required type="input" class="form-control" ng-model="formI.indirizzo" placeholder="Indirizzo"><br>
+            <div class="input-group">
+              <div class="input-group-addon">x</div><input required type="input" ng-model="markers['__temp_marker'].lat" class="form-control" disabled><div class="input-group-addon">y</div><input required type="input" ng-model="markers['__temp_marker'].lng" class="form-control" disabled>
+            </div>
+            <button ng-if="newMarker" type="button" ng-click="addMarker()" class="btn btn-primary" style="width:100%"><span class="glyphicon glyphicon-pushpin"></span>  Seleziona un punto sulla mappa</button> <br><br>
+            <input required type="input" class="form-control" id="Iname" ng-model="formI.contatto" placeholder="Contatto">
+            <div class="form-group">
+              <label for="Iname">Volontari</label>
+              <ui-select multiple data-old-tagging="newTagTransform" ng-model="formI.volontari" data-old-tagging-label="(nuovo)">
+                <ui-select-match placeholder="Volontari">{{$item.value.nome}}</ui-select-match>
+                <ui-select-choices repeat="(id, value) in volontari | filter:elencabile | filter:$select.search track by $index">
+                  {{value.value.nome}}
+                </ui-select-choices>
+              </ui-select>
+            </div>
+            <div class="form-group">
+              <label for="Iname">Attrezzatura</label>
+              <ui-select multiple data-old-tagging="newTagTransform" ng-model="formI.attrezzatura" data-old-tagging-label="(nuova)">
+                <ui-select-match placeholder="Attrezzatura">{{$item.value.nome}}</ui-select-match>
+                <ui-select-choices repeat="(id,value) in attrezzatura | filter:elencabile |  filter:$select.search track by $index">
+                  {{value.value.nome}}
+                </ui-select-choices>
+              </ui-select>
+            </div>
+            <div class="form-group">
+              <label for="Iname">Mezzi</label>
+              <ui-select multiple data-old-tagging="newTagTransform" ng-model="formI.mezzi" data-old-tagging-label="(nuova)">
+                <ui-select-match placeholder="Mezzi">{{$item.value.nome}}</ui-select-match>
+                <ui-select-choices repeat="(id,value) in mezzi | filter:elencabile |  filter:$select.search track by $index">
+                  {{value.value.nome}}
+                </ui-select-choices>
+              </ui-select>
+            </div>
+          </form>
+        </div>
+        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9 fill no-padding" ng-controller="MapController">
+          <!-- Mappa -->
+          <leaflet id="mainMap" defaults="defaults" layers="layers" markers="markers" data-comment-geojson="confini" maxbounds="maxbounds" lf-center="center" height="100%" width="100%" event-broadcast="events"></leaflet>
+        </div>
+      </div>
+    </div>
+</body>
+
+  <script>
+    require('../../renderer.js')
+  </script>
+</html>
