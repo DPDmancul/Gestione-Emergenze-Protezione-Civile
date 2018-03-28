@@ -3,7 +3,8 @@ html, body {
   /*overflow: hidden*/
 }
 * {
-  cursor: default !important
+  cursor: default !important;
+  outline: none !important
 }
 [disabled]{
   cursor: not-allowed !important
@@ -29,4 +30,15 @@ html, body {
 }
 .gray{
   color:gray
+}
+
+/*Accordion par emergençis*/
+.panel-group .panel-heading+.panel-collapse>.list-group, .panel-group .panel-heading+.panel-collapse>.panel-body {
+  border-top: none
+}
+.panel-heading[role="tab"][aria-selected="true"]{
+  background-color:white
+}
+.panel-open{
+  border-color:black
 }

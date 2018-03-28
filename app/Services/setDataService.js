@@ -12,23 +12,25 @@ app.factory('setDataService', function(){
       await db.setR('mezzo',res[3])
       callback()
     },
-    addIntervento:(nome,indirizzo,contatto,x,y,e,tipo,mezzo,vol,attr)=>
-      db.addI(nome,indirizzo,contatto,x,y,e,tipo,id=>{
+    addIntervento:(nome,indirizzo,contatto,x,y,e,tipo,mezzo,vol,attr,note,callback)=>
+      db.addI(nome,indirizzo,contatto,x,y,e,tipo,note,async id=>{
+        promises=[]
         if(mezzo!=undefined)
           mezzo.forEach(function(e){
-            db.setUse('mezzo',id,e.value.id)
+            promises.push(db.setUse('mezzo',id,e.value.id))
           })
         if(vol!=undefined)
           vol.forEach(function(e){
-            db.setUse('volontario',id,e.value.id)
+            promises.push(db.setUse('volontario',id,e.value.id))
           })
         if(attr!=undefined)
           attr.forEach(function(e){
-            db.setUse('attrezzatura',id,e.value.id)
+            promises.push(db.setUse('attrezzatura',id,e.value.id))
           })
+        Promise.all(promises).then(callback)
       }),
-      editIntervento:async (id,tipo,indirizzo,contatto,added,removed,callback)=>{
-        await db.editI(id,indirizzo,contatto,tipo)
+      editIntervento:async (id,tipo,indirizzo,contatto,note,added,removed,callback)=>{
+        await db.editI(id,indirizzo,contatto,tipo,note)
         await removeListI(id,removed)
         await addListI(id,added)
         callback()

@@ -41,19 +41,21 @@ app.controller("StoricoController", ['$scope','getDataService','leafletData','$f
         title:e.nome,
         focus: false,
         draggable: false,
-        icon: e.fine==undefined?$scope.__utils.blue_icon:$scope.__utils.gray_icon,
-        fine:e.fine
+        icon: icona(e),
+        fine:e.fine,
+        inizio:e.inizio
       }
     })
     leafletData.getMap('storicoMap').then((map)=>map._onResize())
     return interventi
   }
+  function icona(e){return e.fine==undefined?e.inizio==undefined?$scope.__utils.blue_icon:$scope.__utils.red_icon:$scope.__utils.gray_icon}
   var __last_gotoi=null
   $scope.gotoi=function(id){
-    if(__last_gotoi!=null){
-      $scope.markers[__last_gotoi].icon=$scope.markers[__last_gotoi].fine==undefined?$scope.__utils.blue_icon:$scope.__utils.gray_icon}
+    if(__last_gotoi!=null)
+      $scope.markers[__last_gotoi].icon=icona($scope.markers[__last_gotoi])
     __last_gotoi=id
-    $scope.markers[id].icon=$scope.__utils.red_icon
+    $scope.markers[id].icon=$scope.__utils.yellow_icon
     $scope.center.lat=$scope.markers[id].lat
     $scope.center.lng=$scope.markers[id].lng
   }
@@ -82,6 +84,8 @@ app.controller("StoricoController", ['$scope','getDataService','leafletData','$f
           e[1].forEach((id)=>str+=`${e[2][id-1].nome}<br>`)
           str+='</p>'
         })
+        if(e.note)
+          str+=`<b>Note:</b><br><p style="margin:0;margin-left:30px;white-space:pre-wrap">${e.note}</p>`
         str+='</div>'
       })
       if(unique)

@@ -68,7 +68,7 @@
       <div class="row" style="height:220px">
         <div ng-class="{'col-xs-6':intervento!==null,'col-xs-12':intervento==null}" class="padding fill scroll">
           <ul class="list-group">
-            <li class="list-group-item" style="height:60px;text-align:center;color:{{$index==intervento?'white':i.inizio==null?'blue':i.fine==null?'green':'gray'}};background-color:{{$index==intervento?'blue':'white'}}" ng-click="setIntervento($index);gotoi(i.id)" ng-repeat="i in interventi track by $index">
+            <li class="list-group-item" style="height:60px;text-align:center;color:{{$index==intervento?'white':i.inizio==null?'blue':i.fine==null?'red':'gray'}};background-color:{{$index==intervento?'blue':'white'}}" ng-click="setIntervento($index);gotoi(i.id)" ng-repeat="i in interventi track by $index">
                 <span style="position:absolute;left:15px;line-height:40px">{{i.seg | amDateFormat:intervento==null?'LL':'L'}}</span><span style="line-height:40px">{{i.nome}}</span><span style="position:absolute;right:15px{{i.fine===null?';line-height:40px':''}}">{{i.inizio | amDateFormat:intervento==null?'LL':'L'}}<br>{{i.fine | amDateFormat:intervento==null?'LL':'L'}}</span>
             </li>
           </ul>
@@ -79,18 +79,20 @@
             <div class="panel-body">
                 <h5>{{interventi[intervento].indirizzo}} - {{interventi[intervento].contatto}}</h5>
                 <h5>{{interventi[intervento].x|todeg}}, {{interventi[intervento].y|todeg}}</h5>
-                <b>volontari</b>:
+                <b>Volontari</b>:
                 <span ng-repeat="r in interventi[intervento].volontari">
                   {{volontari[r-1].nome}}{{$last?'':','}}
                 </span>
-                <br><b>attrezzatura</b>:
+                <br><b>Attrezzatura</b>:
                 <span ng-repeat="r in interventi[intervento].attrezzatura">
                   {{attrezzatura[r-1].nome}}{{$last?'':','}}
                 </span>
-                <br><b>mezzi</b>:
+                <br><b>Mezzi</b>:
                 <span ng-repeat="r in interventi[intervento].mezzi">
                   {{mezzi[r-1].nome}}{{$last?'':','}}
                 </span>
+                <br ng-if-start="interventi[intervento].note"><br><b>Note</b>:
+                <span style="white-space:pre-wrap" ng-if-end>{{interventi[intervento].note}}</span>
             </div>
           </div>
         </div>
@@ -167,10 +169,10 @@
             <input required type="input" class="form-control" ng-model="formI.indirizzo" placeholder="Indirizzo"><br>
             <div class="input-group">
               <div class="input-group-addon">x</div><input required type="input" ng-model="markers['__temp_marker'].lat" class="form-control" disabled><div class="input-group-addon">y</div><input required type="input" ng-model="markers['__temp_marker'].lng" class="form-control" disabled>
-            </div>
-            <button ng-if="newMarker" type="button" ng-click="addMarker()" class="btn btn-primary" style="width:100%"><span class="glyphicon glyphicon-pushpin"></span>  Seleziona un punto sulla mappa</button> <br><br>
+            </div><br>
+            <button ng-if="newMarker" type="button" ng-click="addMarker()" class="btn btn-primary" style="margin-top:-20px;width:100%"><span class="glyphicon glyphicon-pushpin"></span>  Seleziona un punto sulla mappa</button> <br ng-if="newMarker"><br ng-if="newMarker">
             <input required type="input" class="form-control" id="Iname" ng-model="formI.contatto" placeholder="Contatto">
-            <div class="form-group">
+            <div class="form-group"><br>
               <label for="Iname">Volontari</label>
               <ui-select multiple data-old-tagging="newTagTransform" ng-model="formI.volontari" data-old-tagging-label="(nuovo)">
                 <ui-select-match placeholder="Volontari">{{$item.value.nome}}</ui-select-match>
@@ -197,6 +199,7 @@
                 </ui-select-choices>
               </ui-select>
             </div>
+            <textarea class="form-control" id="Inote" ng-model="formI.note" maxlength="1000" placeholder="Note"  style="resize:vertical"></textarea>
           </form>
         </div>
         <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9 fill no-padding" ng-controller="MapController">

@@ -41,9 +41,22 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
     iconAnchor: [12, 41],
     popupAnchor: [1, -34]
   }
-  $scope.__utils={red_icon:red_icon,gray_icon:gray_icon,blue_icon:blue_icon}
+  var yellow_icon= {
+    iconUrl: '../img/yellow.svg',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+  }
+  $scope.__utils={red_icon:red_icon,gray_icon:gray_icon,blue_icon:blue_icon,yellow_icon:yellow_icon}
 
   function createMarkers(){
+    let temp = $scope.markers[__temp_marker]
+    resetMarkers()
+    if(temp!=undefined)
+      $scope.markers[__temp_marker]=temp
+  }
+
+  function resetMarkers(){
     $scope.markers={}
     $scope.emergenze.forEach(function(ep,i){
       ep.interventi.forEach(function(e,j){
@@ -55,27 +68,27 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
           message:  '<h4>'+e.nome+' <small>- '+(e.tipo?($scope.tipi[e.tipo-1].nome):e.altro)+'</small> <button title="Modifica" type="button" ng-click="editI(emergenze['+i+'].interventi['+j+'])" class="btn"><span class="glyphicon glyphicon-edit"></span><button title="Sposta" type="button" ng-click="moveI(\''+ep.id+'@'+e.id+'\','+e.id+')" class="btn"><span class="glyphicon glyphicon-move"></span></button></h4>\
                     <h5><small>Emergenza: </small>'+ep.nome+'<small> del </small>{{\''+ep.data+'\'|amDateFormat:\'l\'}}</h5>\
                     <h5>'+e.indirizzo+' - '+e.contatto+'</h5>\
-                    segnalazione: {{\''+e.seg+'\'|amDateFormat:\'LLLL\'}}<br>'+
-                    (e.inizio==undefined?'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-success"><span class="glyphicon glyphicon-ok"></span>  Prendi in carico</button>':'inizio: {{\''+e.inizio+'\'|amDateFormat:\'LLLL\'}}<br>')+
-                    (e.fine==undefined?(e.inizio==undefined?'':'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-danger"><span class="glyphicon glyphicon-flag"></span>  Fine intervento</button>'):'fine: {{\''+e.fine+'\'|amDateFormat:\'LLLL\'}}')+
+                    Segnalazione: {{\''+e.seg+'\'|amDateFormat:\'LLLL\'}}<br>'+
+                    (e.inizio==undefined?'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-success"><span class="glyphicon glyphicon-ok"></span>  Prendi in carico</button>':'Inizio: {{\''+e.inizio+'\'|amDateFormat:\'LLLL\'}}<br>')+
+                    (e.fine==undefined?(e.inizio==undefined?'':'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-danger"><span class="glyphicon glyphicon-flag"></span>  Fine intervento</button>'):'Fine: {{\''+e.fine+'\'|amDateFormat:\'LLLL\'}}')+
                     '<h5>{{'+e.x+'|todeg}}, {{'+e.y+'|todeg}}</h5>\
-                    <b>volontari</b>:\
+                    <b>Volontari</b>:\
                     <span ng-repeat="r in emergenze['+i+'].interventi['+j+'].volontari track by $index">\
                       {{volontari[r-1].nome}}{{$last?\'\':\',\'}} \
                     </span>\
-                    <br><b>attrezzatura</b>:\
+                    <br><b>Attrezzatura</b>:\
                     <span ng-repeat="r in emergenze['+i+'].interventi['+j+'].attrezzatura track by $index">\
                       {{attrezzatura[r-1].nome}}{{$last?\'\':\',\'}} \
                     </span>\
-                    <br><b>mezzi</b>:\
+                    <br><b>Mezzi</b>:\
                     <span ng-repeat="r in emergenze['+i+'].interventi['+j+'].mezzi track by $index">\
                       {{mezzi[r-1].nome}}{{$last?\'\':\',\'}} \
-                    </span>',
+                    </span>'+(e.note?'<br><br><b>Note</b>: <span style="white-space:pre-wrap">'+e.note+'</span>':''),
           compileMessage: true,
           focus: false,
           draggable: false,
-          icon: e.fine==undefined?blue_icon:gray_icon,
-          fine:e.fine
+          icon: icona(e.fine==undefined,e.inizio==undefined),
+          fine:e.fine==undefined,inizio:e.inizio==undefined
         }
       })
     })
@@ -83,18 +96,19 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
 
   var __last_gotoi=null
   var __last_gotoIstate=null
+  function icona(ufine,uinizio){return ufine?uinizio?blue_icon:red_icon:gray_icon}
   $scope.gotoi=function(id){
     //leafletData.getMap('mainMap').then((map)=>map.closePopup())
     //$scope.markers[id].focus=true //non fa il $digest
     leafletData.getMap('mainMap').then((map)=>{
       if(__last_gotoi!==null&&__last_gotoIstate!==null)
-        __last_gotoi.setIcon(L.icon(__last_gotoIstate?blue_icon:gray_icon))
+        __last_gotoi.setIcon(L.icon(icona(__last_gotoIstate[0],__last_gotoIstate[1])))
       map.eachLayer((layer)=>{
         if(layer instanceof L.Marker && layer.options.title===$scope.markers[id].title && layer.options.lat===$scope.markers[id].lat && layer.options.lng===$scope.markers[id].lng){
           __last_gotoi=layer
-          __last_gotoIstate=$scope.markers[id].fine==undefined
-          layer.togglePopup()
-          layer.setIcon(L.icon(red_icon))
+          __last_gotoIstate=[$scope.markers[id].fine,$scope.markers[id].inizio]
+          layer.togglePopup().on("popupclose", e=>layer.setIcon(L.icon(icona($scope.markers[id].fine,$scope.markers[id].inizio))))
+          layer.setIcon(L.icon(yellow_icon))
         }
       })
     })
@@ -142,7 +156,7 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
     movingI=true
     __temp_marker=id
     $scope.markers[id].draggable=true
-    $scope.markers[id].icon=red_icon
+    $scope.markers[id].icon=yellow_icon
     $scope.markers[id].message=null
     $scope.MOVER={id:id,iid:iid}
   }
@@ -219,12 +233,10 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
     donTmarker =true
     $scope.newI=false
     $scope.formI={}
-    createMarkers()
+    resetMarkers()
   }
   $scope.saveIntervento=function(){
-    setDataService.addIntervento($scope.formI.nome,$scope.formI.indirizzo,$scope.formI.contatto,$scope.markers[__temp_marker].lat,$scope.markers[__temp_marker].lng,$scope.formI.emergenza.id,$scope.formI.tipo.value.id,$scope.formI.mezzi,$scope.formI.volontari,$scope.formI.attrezzatura)
-    //A livello teorico l'istruzione seguente potrebbe partire prima che la precedente termini (mysql è asincrono), ma non si è mai verificato: CONTROLLARE BENE se è sempre così o se ho sempre avuto fortuna nelle prove
-    getDataService.getEmergenze($scope,()=>{$scope.cancelIntervento();$scope.$digest()})
+    setDataService.addIntervento($scope.formI.nome,$scope.formI.indirizzo,$scope.formI.contatto,$scope.markers[__temp_marker].lat,$scope.markers[__temp_marker].lng,$scope.formI.emergenza.id,$scope.formI.tipo.value.id,$scope.formI.mezzi,$scope.formI.volontari,$scope.formI.attrezzatura,$scope.formI.note,()=>getDataService.getEmergenze($scope,()=>{$scope.cancelIntervento();$scope.$digest()}))
   }
   $scope.stepIntervento=function(id){
     db.stepIStatus(id,()=>
@@ -244,8 +256,8 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
   }
   $scope.addMarker=function(){
     if(__last_gotoi!=null){
-      __last_gotoi.icon={}
-      __last_gotoi.focus=false}
+      __last_gotoi.setIcon(L.icon(icona(__last_gotoIstate[0],__last_gotoIstate[1])))
+      __last_gotoi.closePopup()}
     donTmarker=false
   }
   $scope.$on('leafletDirectiveMap.mainMap.click', function(e,leafletPayload){
@@ -259,7 +271,7 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
       message: 'Trascinami nel punto esatto',
       focus: true,
       draggable: true,
-      icon: red_icon
+      icon: yellow_icon
     }
     $scope.newMarker=false
   })

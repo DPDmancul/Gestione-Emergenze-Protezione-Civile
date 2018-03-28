@@ -55,7 +55,7 @@
       <div class="row" style="height:220px">
         <div ng-class="{'col-xs-6':intervento!==null,'col-xs-12':intervento==null}" class="padding fill scroll">
           <ul class="list-group">
-            <li class="list-group-item" style="height:60px;text-align:center;color:{{$index==intervento?'white':i.inizio==null?'blue':i.fine==null?'green':'gray'}};background-color:{{$index==intervento?'blue':'white'}}" ng-click="setIntervento($index);gotoi(i.id)" ng-repeat="i in interventi track by $index">
+            <li class="list-group-item" style="height:60px;text-align:center;color:{{$index==intervento?'white':i.inizio==null?'blue':i.fine==null?'red':'gray'}};background-color:{{$index==intervento?'blue':'white'}}" ng-click="setIntervento($index);gotoi(i.id)" ng-repeat="i in interventi track by $index">
                 <span style="position:absolute;left:15px;line-height:40px">{{i.seg | amDateFormat:intervento==null?'LL':'L'}}</span><span style="line-height:40px">{{i.nome}}</span><span style="position:absolute;right:15px{{i.fine===null?';line-height:40px':''}}">{{i.inizio | amDateFormat:intervento==null?'LL':'L'}}<br>{{i.fine | amDateFormat:intervento==null?'LL':'L'}}</span>
             </li>
           </ul>
@@ -66,18 +66,20 @@
             <div class="panel-body">
                 <h5>{{interventi[intervento].indirizzo}} - {{interventi[intervento].contatto}}</h5>
                 <h5>{{interventi[intervento].x|todeg}}, {{interventi[intervento].y|todeg}}</h5>
-                <b>volontari</b>:
+                <b>Volontari</b>:
                 <span ng-repeat="r in interventi[intervento].volontari">
                   {{volontari[r-1].nome}}{{$last?'':','}}
                 </span>
-                <br><b>attrezzatura</b>:
+                <br><b>Attrezzatura</b>:
                 <span ng-repeat="r in interventi[intervento].attrezzatura">
                   {{attrezzatura[r-1].nome}}{{$last?'':','}}
                 </span>
-                <br><b>mezzi</b>:
+                <br><b>Mezzi</b>:
                 <span ng-repeat="r in interventi[intervento].mezzi">
                   {{mezzi[r-1].nome}}{{$last?'':','}}
                 </span>
+                <br ng-if-start="interventi[intervento].note"><br><b>Note</b>:
+                <span style="white-space:pre-wrap" ng-if-end>{{interventi[intervento].note}}</span>
             </div>
           </div>
         </div>

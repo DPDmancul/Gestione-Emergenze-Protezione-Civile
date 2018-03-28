@@ -83,7 +83,7 @@ __getI=async function(e,callback){
 }
 
 exports.getI=function(id,callback){
-  connection.query('SELECT A.id AS id,A.nome AS nome,B.nome AS emergenza,indirizzo,seg,x,y,inizio,fine,contatto,tipo_id AS tipo FROM intervento AS A INNER JOIN emergenza AS B ON emergenza_id = B.id WHERE A.id=?', [id],(e,r,f)=>typeof callback === 'function' && __getI(r[0],callback))
+  connection.query('SELECT A.id AS id,A.nome AS nome,B.nome AS emergenza,indirizzo,seg,x,y,inizio,fine,contatto,tipo_id AS tipo, note FROM intervento AS A INNER JOIN emergenza AS B ON emergenza_id = B.id WHERE A.id=?', [id],(e,r,f)=>typeof callback === 'function' && __getI(r[0],callback))
 }
 
 exports.getAllE=function(callback){
@@ -109,7 +109,9 @@ exports.getAdvancedEI=(roba,callback)=>{
     intervento.fine AS fine,\
     intervento.x AS x,\
     intervento.y AS y,\
-    emergenza_id ,tipo.nome AS tipo FROM is'+roba[0]+' INNER JOIN intervento ON intervento.id=intervento_id INNER JOIN tipo ON tipo_id=tipo.id WHERE '+roba[0].toLowerCase()+'_id = ?',[roba[1].id],(e,interventi)=>{
+    emergenza_id ,\
+    tipo.nome AS tipo,\
+    intervento.note AS note FROM is'+roba[0]+' INNER JOIN intervento ON intervento.id=intervento_id INNER JOIN tipo ON tipo_id=tipo.id WHERE '+roba[0].toLowerCase()+'_id = ?',[roba[1].id],(e,interventi)=>{
     if(e)throw e
     if(interventi===undefined||interventi.length==0)
       return callback({e:[],i:[]})
@@ -127,7 +129,7 @@ exports.getAdvancedEI=(roba,callback)=>{
 }
 
 exports.getIByE=async function(eid,callback){
-  connection.query('SELECT *,intervento.id AS id, intervento.nome AS nome,tipo.nome AS tipo FROM intervento INNER JOIN tipo ON tipo_id = tipo.id WHERE emergenza_id =? ORDER BY seg', [eid],async(e,r,f)=>{
+  connection.query('SELECT *,intervento.id AS id, intervento.nome AS nome,tipo.nome AS tipo, note FROM intervento INNER JOIN tipo ON tipo_id = tipo.id WHERE emergenza_id =? ORDER BY seg', [eid],async(e,r,f)=>{
     var obj=[]
     for(i=0;i<r.length;++i)
       obj.push(await __getI(r[i]))
@@ -142,7 +144,7 @@ exports.getE=async function(less,callback){
       if(less)
         obj.push({id:e.id,nome:e.nome,data:e.data})
       else
-        await promiser(returner=>connection.query('SELECT id,nome,indirizzo,seg,x,y,inizio,fine,contatto,tipo_id AS tipo FROM intervento WHERE emergenza_id=? ORDER BY id',[e.id],async(err,r,f)=>{
+        await promiser(returner=>connection.query('SELECT id,nome,indirizzo,seg,x,y,inizio,fine,contatto,tipo_id AS tipo, note FROM intervento WHERE emergenza_id=? ORDER BY id',[e.id],async(err,r,f)=>{
           var i=[]
           for(k=0;k<r.length;++k)
             i.push(await __getI(r[k]))
@@ -170,19 +172,22 @@ exports.reopenE=(id,callback)=>{
   )
 }
 
-exports.addI=function(nome,indirizzo,contatto,x,y,e,tipo,callback){
-  trydb(connection.query('INSERT INTO intervento VALUES (null,?,?,?,null,CURRENT_TIMESTAMP,null,null,?,?,?,?)', [nome,indirizzo,contatto,x,y,tipo,e],(e,r,f)=>{if(e)throw e;typeof callback === 'function' && callback(r.insertId)})
+exports.addI=function(nome,indirizzo,contatto,x,y,e,tipo,note,callback){
+  trydb(connection.query('INSERT INTO intervento VALUES (null,?,?,?,null,CURRENT_TIMESTAMP,null,null,?,?,?,?,?)', [nome,indirizzo,contatto,x,y,tipo,e,note],(e,r,f)=>{if(e)throw e;typeof callback === 'function' && callback(r.insertId)})
   )
 }
-exports.editI=(id,indirizzo,contatto,tipo,callback)=>{
-  return promiser(returner=>trydb(()=>connection.query('UPDATE intervento SET indirizzo=?, contatto=?, tipo_id= ? WHERE id = ?', [indirizzo,contatto,tipo,id],()=>{returner();typeof callback === 'function' && callback()})))
+exports.editI=(id,indirizzo,contatto,tipo,note,callback)=>{
+  return promiser(returner=>trydb(()=>connection.query('UPDATE intervento SET indirizzo=?, contatto=?, tipo_id= ?, note=? WHERE id = ?', [indirizzo,contatto,tipo,note,id],()=>{returner();typeof callback === 'function' && callback()})))
 }
-exports.setUse=function(table,iid,rid,callback){
+let __setUse=function(table,iid,rid,callback){
   if(ncheck(table))
-    return console.error( 'Nome tabella `'+table+'` non ammesso')
+    return callback(console.error( 'Nome tabella `'+table+'` non ammesso'))
   trydb(()=>{
     connection.query('INSERT INTO is'+table.charAt(0).toUpperCase() + table.slice(1)+' VALUES (null,?,?)', [iid,rid],callback)
   })
+}
+exports.setUse=function(table,iid,rid,callback){
+  return promiser(returner=>__setUse(table,iid,rid,()=>{returner();typeof callback === 'function' && callback()}))
 }
 exports.unsetUse=function(table,iid,rid,callback){
   if(ncheck(table))

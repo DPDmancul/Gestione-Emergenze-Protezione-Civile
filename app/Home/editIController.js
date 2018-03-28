@@ -42,7 +42,7 @@ app.controller("EditIController", ['$scope','getDataService','setDataService','$
       if(r=='removed')
         removed.push([i,j])
     }))
-    setDataService.editIntervento($scope.id,$scope.formI.tipo.id,$scope.formI.indirizzo,$scope.formI.contatto,added,removed,
+    setDataService.editIntervento($scope.id,$scope.formI.tipo.id,$scope.formI.indirizzo,$scope.formI.contatto,$scope.formI.note,added,removed,
       $uibModalInstance.close)
   }
 }])

@@ -33,49 +33,6 @@ app.filter('todeg', function () {
   }
 })
 
-app.controller("AdminController", ['$scope','getDataService','locals','setDataService','$uibModalInstance',function($scope,getDataService,locals,setDataService,$uibModalInstance) {
-  getDataService.getResources($scope,()=>$scope.$digest())
-  $scope.ok = ()=>
-    setDataService.editResources($scope.arrays,()=>
-      getDataService.update(locals.scope,()=>
-        $uibModalInstance.close()
-      )
-    )
-
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel')
-  }
-  $scope.addItem= function(i){
-    if($scope.new[i]!='')
-      $scope.arrays[i].push({id:-1,nome:$scope.new[i],original:$scope.new[i],flag:'none'})
-    $scope.new[i]=''
-  }
-  $scope.new=['','','','']
-  $scope.titles=['Tipi di intervento','Volontari','Attrezzatura','Mezzi']
-
-  $scope.remove=function(e){
-      if(e.flag!='r')
-        e.flag='r'
-      else
-        if(e.nome!=e.original)
-          e.flag='e'
-        else
-          e.flag='none'
-  }
-  $scope.edit=function(e){
-    if(e.flag=='e'){
-      e.nome=e.original//restore
-      e.flag='none'
-    }
-    else if(e.flag=='ec')//editing in corso
-      if(e.nome!=e.original)
-        e.flag='e'
-      else
-        e.flag='none'
-    else
-      e.flag='ec'
-  }
-}])
 app.controller("HomeController",['$scope','$uibModal','leafletData','getDataService','setDataService','$filter',function($scope,$uibModal,leafletData,getDataService,setDataService,$filter) {
 
   ipcRenderer.on('open', function(event, what) {
@@ -119,9 +76,22 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
     iconAnchor: [12, 41],
     popupAnchor: [1, -34]
   }
-  $scope.__utils={red_icon:red_icon,gray_icon:gray_icon,blue_icon:blue_icon}
+  var yellow_icon= {
+    iconUrl: '../img/yellow.svg',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+  }
+  $scope.__utils={red_icon:red_icon,gray_icon:gray_icon,blue_icon:blue_icon,yellow_icon:yellow_icon}
 
   function createMarkers(){
+    let temp = $scope.markers[__temp_marker]
+    resetMarkers()
+    if(temp!=undefined)
+      $scope.markers[__temp_marker]=temp
+  }
+
+  function resetMarkers(){
     $scope.markers={}
     $scope.emergenze.forEach(function(ep,i){
       ep.interventi.forEach(function(e,j){
@@ -133,27 +103,27 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
           message:  '<h4>'+e.nome+' <small>- '+(e.tipo?($scope.tipi[e.tipo-1].nome):e.altro)+'</small> <button title="Modifica" type="button" ng-click="editI(emergenze['+i+'].interventi['+j+'])" class="btn"><span class="glyphicon glyphicon-edit"></span><button title="Sposta" type="button" ng-click="moveI(\''+ep.id+'@'+e.id+'\','+e.id+')" class="btn"><span class="glyphicon glyphicon-move"></span></button></h4>\
                     <h5><small>Emergenza: </small>'+ep.nome+'<small> del </small>{{\''+ep.data+'\'|amDateFormat:\'l\'}}</h5>\
                     <h5>'+e.indirizzo+' - '+e.contatto+'</h5>\
-                    segnalazione: {{\''+e.seg+'\'|amDateFormat:\'LLLL\'}}<br>'+
-                    (e.inizio==undefined?'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-success"><span class="glyphicon glyphicon-ok"></span>  Prendi in carico</button>':'inizio: {{\''+e.inizio+'\'|amDateFormat:\'LLLL\'}}<br>')+
-                    (e.fine==undefined?(e.inizio==undefined?'':'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-danger"><span class="glyphicon glyphicon-flag"></span>  Fine intervento</button>'):'fine: {{\''+e.fine+'\'|amDateFormat:\'LLLL\'}}')+
+                    Segnalazione: {{\''+e.seg+'\'|amDateFormat:\'LLLL\'}}<br>'+
+                    (e.inizio==undefined?'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-success"><span class="glyphicon glyphicon-ok"></span>  Prendi in carico</button>':'Inizio: {{\''+e.inizio+'\'|amDateFormat:\'LLLL\'}}<br>')+
+                    (e.fine==undefined?(e.inizio==undefined?'':'<button type="button" ng-click="stepIntervento('+e.id+')" class="btn btn-danger"><span class="glyphicon glyphicon-flag"></span>  Fine intervento</button>'):'Fine: {{\''+e.fine+'\'|amDateFormat:\'LLLL\'}}')+
                     '<h5>{{'+e.x+'|todeg}}, {{'+e.y+'|todeg}}</h5>\
-                    <b>volontari</b>:\
+                    <b>Volontari</b>:\
                     <span ng-repeat="r in emergenze['+i+'].interventi['+j+'].volontari track by $index">\
                       {{volontari[r-1].nome}}{{$last?\'\':\',\'}} \
                     </span>\
-                    <br><b>attrezzatura</b>:\
+                    <br><b>Attrezzatura</b>:\
                     <span ng-repeat="r in emergenze['+i+'].interventi['+j+'].attrezzatura track by $index">\
                       {{attrezzatura[r-1].nome}}{{$last?\'\':\',\'}} \
                     </span>\
-                    <br><b>mezzi</b>:\
+                    <br><b>Mezzi</b>:\
                     <span ng-repeat="r in emergenze['+i+'].interventi['+j+'].mezzi track by $index">\
                       {{mezzi[r-1].nome}}{{$last?\'\':\',\'}} \
-                    </span>',
+                    </span>'+(e.note?'<br><br><b>Note</b>: <span style="white-space:pre-wrap">'+e.note+'</span>':''),
           compileMessage: true,
           focus: false,
           draggable: false,
-          icon: e.fine==undefined?blue_icon:gray_icon,
-          fine:e.fine
+          icon: icona(e.fine==undefined,e.inizio==undefined),
+          fine:e.fine==undefined,inizio:e.inizio==undefined
         }
       })
     })
@@ -161,18 +131,19 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
 
   var __last_gotoi=null
   var __last_gotoIstate=null
+  function icona(ufine,uinizio){return ufine?uinizio?blue_icon:red_icon:gray_icon}
   $scope.gotoi=function(id){
     //leafletData.getMap('mainMap').then((map)=>map.closePopup())
     //$scope.markers[id].focus=true //non fa il $digest
     leafletData.getMap('mainMap').then((map)=>{
       if(__last_gotoi!==null&&__last_gotoIstate!==null)
-        __last_gotoi.setIcon(L.icon(__last_gotoIstate?blue_icon:gray_icon))
+        __last_gotoi.setIcon(L.icon(icona(__last_gotoIstate[0],__last_gotoIstate[1])))
       map.eachLayer((layer)=>{
         if(layer instanceof L.Marker && layer.options.title===$scope.markers[id].title && layer.options.lat===$scope.markers[id].lat && layer.options.lng===$scope.markers[id].lng){
           __last_gotoi=layer
-          __last_gotoIstate=$scope.markers[id].fine==undefined
-          layer.togglePopup()
-          layer.setIcon(L.icon(red_icon))
+          __last_gotoIstate=[$scope.markers[id].fine,$scope.markers[id].inizio]
+          layer.togglePopup().on("popupclose", e=>layer.setIcon(L.icon(icona($scope.markers[id].fine,$scope.markers[id].inizio))))
+          layer.setIcon(L.icon(yellow_icon))
         }
       })
     })
@@ -220,7 +191,7 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
     movingI=true
     __temp_marker=id
     $scope.markers[id].draggable=true
-    $scope.markers[id].icon=red_icon
+    $scope.markers[id].icon=yellow_icon
     $scope.markers[id].message=null
     $scope.MOVER={id:id,iid:iid}
   }
@@ -297,12 +268,10 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
     donTmarker =true
     $scope.newI=false
     $scope.formI={}
-    createMarkers()
+    resetMarkers()
   }
   $scope.saveIntervento=function(){
-    setDataService.addIntervento($scope.formI.nome,$scope.formI.indirizzo,$scope.formI.contatto,$scope.markers[__temp_marker].lat,$scope.markers[__temp_marker].lng,$scope.formI.emergenza.id,$scope.formI.tipo.value.id,$scope.formI.mezzi,$scope.formI.volontari,$scope.formI.attrezzatura)
-    //A livello teorico l'istruzione seguente potrebbe partire prima che la precedente termini (mysql è asincrono), ma non si è mai verificato: CONTROLLARE BENE se è sempre così o se ho sempre avuto fortuna nelle prove
-    getDataService.getEmergenze($scope,()=>{$scope.cancelIntervento();$scope.$digest()})
+    setDataService.addIntervento($scope.formI.nome,$scope.formI.indirizzo,$scope.formI.contatto,$scope.markers[__temp_marker].lat,$scope.markers[__temp_marker].lng,$scope.formI.emergenza.id,$scope.formI.tipo.value.id,$scope.formI.mezzi,$scope.formI.volontari,$scope.formI.attrezzatura,$scope.formI.note,()=>getDataService.getEmergenze($scope,()=>{$scope.cancelIntervento();$scope.$digest()}))
   }
   $scope.stepIntervento=function(id){
     db.stepIStatus(id,()=>
@@ -322,8 +291,8 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
   }
   $scope.addMarker=function(){
     if(__last_gotoi!=null){
-      __last_gotoi.icon={}
-      __last_gotoi.focus=false}
+      __last_gotoi.setIcon(L.icon(icona(__last_gotoIstate[0],__last_gotoIstate[1])))
+      __last_gotoi.closePopup()}
     donTmarker=false
   }
   $scope.$on('leafletDirectiveMap.mainMap.click', function(e,leafletPayload){
@@ -337,7 +306,7 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
       message: 'Trascinami nel punto esatto',
       focus: true,
       draggable: true,
-      icon: red_icon
+      icon: yellow_icon
     }
     $scope.newMarker=false
   })
@@ -457,11 +426,243 @@ app.controller("EditIController", ['$scope','getDataService','setDataService','$
       if(r=='removed')
         removed.push([i,j])
     }))
-    setDataService.editIntervento($scope.id,$scope.formI.tipo.id,$scope.formI.indirizzo,$scope.formI.contatto,added,removed,
+    setDataService.editIntervento($scope.id,$scope.formI.tipo.id,$scope.formI.indirizzo,$scope.formI.contatto,$scope.formI.note,added,removed,
       $uibModalInstance.close)
   }
 }])
 
+app.controller("AdminController", ['$scope','getDataService','locals','setDataService','$uibModalInstance',function($scope,getDataService,locals,setDataService,$uibModalInstance) {
+  getDataService.getResources($scope,()=>$scope.$digest())
+  $scope.ok = ()=>
+    setDataService.editResources($scope.arrays,()=>
+      getDataService.update(locals.scope,()=>
+        $uibModalInstance.close()
+      )
+    )
+
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel')
+  }
+  $scope.addItem= function(i){
+    if($scope.new[i]!='')
+      $scope.arrays[i].push({id:-1,nome:$scope.new[i],original:$scope.new[i],flag:'none'})
+    $scope.new[i]=''
+  }
+  $scope.new=['','','','']
+  $scope.titles=['Tipi di intervento','Volontari','Attrezzatura','Mezzi']
+
+  $scope.remove=function(e){
+      if(e.flag!='r')
+        e.flag='r'
+      else
+        if(e.nome!=e.original)
+          e.flag='e'
+        else
+          e.flag='none'
+  }
+  $scope.edit=function(e){
+    if(e.flag=='e'){
+      e.nome=e.original//restore
+      e.flag='none'
+    }
+    else if(e.flag=='ec')//editing in corso
+      if(e.nome!=e.original)
+        e.flag='e'
+      else
+        e.flag='none'
+    else
+      e.flag='ec'
+  }
+}])
+app.factory('getDataService', function(){
+  let __update=async ($scope,callback)=>{
+    $scope.tipi = await db.get('tipo')
+    $scope.volontari = await db.get('volontario')
+    $scope.attrezzatura = await db.get('attrezzatura')
+    $scope.mezzi = await db.get('mezzo')
+    typeof callback === 'function' && callback()
+  }
+  let __getE=($scope,callback)=>
+    db.getE(false,r=>{$scope.emergenze=r;typeof callback === 'function' && callback(r)})
+  return {
+    init:function($scope,callback){
+      $scope.center={
+        zoom:db.get_pref('zoom','intero'),
+        lat:db.get_pref('lat','decimale'),
+        lng:db.get_pref('lng','decimale')
+      }
+      $scope.tipi=[]
+      $scope.volontari=[]
+      $scope.attrezzatura=[]
+      $scope.mezzi=[]
+      __update($scope,()=>__getE($scope,callback))
+    },
+    update:__update,
+    getEmergenze:__getE,
+    listEmergenze:db.getAllE,
+    listEmergenzeAdvanced:(a,callback)=>db.getAdvancedEI([a.what,a[a.what]],callback),
+    listInterventi:db.getIByE,
+    getResources:async ($scope,callback)=>{$scope.arrays=[await db.getR('tipo'),await db.getR('volontario'),await db.getR('attrezzatura'),await db.getR('mezzo')];typeof callback === 'function' && callback()}
+  }
+})
+app.factory('setDataService', function(){
+  let __editListI=(i,list,fnc)=>Promise.all(list.map(e=>new Promise(resolve =>
+    fnc(['volontario','attrezzatura','mezzo'][e[0]],i,e[1],resolve))
+  ))
+  let addListI=(i,list)=>__editListI(i,list,db.setUse)
+  let removeListI=(i,list)=>__editListI(i,list,db.unsetUse)
+  return {
+    editResources:async function(res,callback){
+      await db.setR('tipo',res[0])
+      await db.setR('volontario',res[1])
+      await db.setR('attrezzatura',res[2])
+      await db.setR('mezzo',res[3])
+      callback()
+    },
+    addIntervento:(nome,indirizzo,contatto,x,y,e,tipo,mezzo,vol,attr,note,callback)=>
+      db.addI(nome,indirizzo,contatto,x,y,e,tipo,note,async id=>{
+        promises=[]
+        if(mezzo!=undefined)
+          mezzo.forEach(function(e){
+            promises.push(db.setUse('mezzo',id,e.value.id))
+          })
+        if(vol!=undefined)
+          vol.forEach(function(e){
+            promises.push(db.setUse('volontario',id,e.value.id))
+          })
+        if(attr!=undefined)
+          attr.forEach(function(e){
+            promises.push(db.setUse('attrezzatura',id,e.value.id))
+          })
+        Promise.all(promises).then(callback)
+      }),
+      editIntervento:async (id,tipo,indirizzo,contatto,note,added,removed,callback)=>{
+        await db.editI(id,indirizzo,contatto,tipo,note)
+        await removeListI(id,removed)
+        await addListI(id,added)
+        callback()
+      }
+    }
+})
+
+app.controller("StoricoController", ['$scope','getDataService','leafletData','$filter',($scope,getDataService,leafletData,$filter)=>{
+  $scope.emergenza=null
+  $scope.intervento=null
+  $scope.emergenze=[]
+  $scope.markers={}
+  $scope.advancedReady=false
+  $scope.advancedUnready=()=>$scope.advancedReady=false
+  $scope.advancedQueries={what:null,Volontario:null,Attrezzatura:null,Mezzo:null}
+  var __async_update=callback=>{
+    $scope.emergenza=$scope.intervento=null
+    $scope.$parent.storicoRiepilogo=false
+    $scope.$parent.advancedStoricoView=false
+    getDataService.listEmergenze(e=>{$scope.emergenze=e;callback(e)})
+  }
+  var update=()=>__async_update(()=>{$scope.advancedReady=false;$scope.$digest()})
+  var getInterventi=(eid)=>getDataService.listInterventi(eid,(i)=>{$scope.interventi=createReturnMarkers(i);$scope.$digest()})
+  update()
+  $scope.$on('open.storicoView', ()=>update())
+  $scope.setEmergenza=id=>{
+    __last_gotoi=null
+    $scope.intervento=null
+    $scope.emergenza=id
+    if(!$scope.storicoRiepilogo)
+      getInterventi(id)
+    else
+      $scope.interventi=createReturnMarkers($scope.Ainterventi[id])
+  }
+  $scope.setIntervento=id=>$scope.intervento=id
+  $scope.reopenEmergency=id=>{
+    dialog.showMessageBox(mainWindow,{type:"warning", buttons:['Annulla','RIAPRI'], defaultId:1, title:'Conferma riapertura', message:'Premendo su RIAPRI riaprirai l\'emergenza', detail:'Questa operazione è irreversibile: l\'emergenza risulaterà non essere mai stata chiusa'},function(r){
+      if(r==1)
+        db.reopenE(id,()=>update())
+    })
+  }
+  function createReturnMarkers(interventi){
+    $scope.markers={}
+    interventi.forEach(function(e,i){
+      $scope.markers[e.id]={
+        lat: e.x,
+        lng: e.y,
+        title:e.nome,
+        focus: false,
+        draggable: false,
+        icon: icona(e),
+        fine:e.fine,
+        inizio:e.inizio
+      }
+    })
+    leafletData.getMap('storicoMap').then((map)=>map._onResize())
+    return interventi
+  }
+  function icona(e){return e.fine==undefined?e.inizio==undefined?$scope.__utils.blue_icon:$scope.__utils.red_icon:$scope.__utils.gray_icon}
+  var __last_gotoi=null
+  $scope.gotoi=function(id){
+    if(__last_gotoi!=null)
+      $scope.markers[__last_gotoi].icon=icona($scope.markers[__last_gotoi])
+    __last_gotoi=id
+    $scope.markers[id].icon=$scope.__utils.yellow_icon
+    $scope.center.lat=$scope.markers[id].lat
+    $scope.center.lng=$scope.markers[id].lng
+  }
+  $scope.filterDateE=(e, i, array)=>{
+    if (!$scope.model.fy)
+      return true
+    if (parseInt($filter('date')(e.data, 'y'))<=$scope.model.y)
+    if (e.chiusura===null||parseInt($filter('date')(e.chiusura, 'y'))>=$scope.model.y)
+      return true
+    return false
+  }
+
+  //let encodeHTML=str=>str.replace(/[\u00A0-\u9999<>\&]/gim, (i)=>'&#'+i.charCodeAt(0)+';')
+  let displayE=(e,unique)=>new Promise(returner=>{
+    str=`<h1><small>Emergenza:</small> ${e.nome}</h1><h2>Apertura: ${$filter('amDateFormat')(e.data,'LL')}<br>Chiusura: ${e.chiusura===null?'---':$filter('amDateFormat')(e.chiusura,'LL')}</h2><hr>`
+    getDataService.listInterventi(e.id,list=>{
+      list.forEach((e)=>{
+        str+=`<div style="margin-top:30px"><big><b>Intervento: ${e.nome} (${e.tipo})</b></big><table>`
+        str+=`<tr><td>Segnalazione:</td><td>${$filter('amDateFormat')(e.seg,'LL')}</td></tr>`
+        str+=`<tr><td>Presa in carico:</td><td>${e.inizio===null?'---':$filter('amDateFormat')(e.inizio,'LL')}</td></tr>`
+        str+=`<tr><td>Chiusura:</td><td>${e.fine===null?'---':$filter('amDateFormat')(e.fine,'LL')}</td></tr></table>`
+        str+=`<i>${e.indirizzo} - ${e.contatto}</i><br>`
+        str+=`Coordinate: ${$filter('todeg')(e.x)}, ${$filter('todeg')(e.y)}<br>`
+        ;[['Volontari',e.volontari,$scope.volontari],['Attrezzatura',e.attrezzatura,$scope.attrezzatura],['Mezzi',e.mezzi,$scope.mezzi]].forEach((e)=>{
+          str+='<b>'+e[0]+':</b><br><p style="margin:0;margin-left:30px">'
+          e[1].forEach((id)=>str+=`${e[2][id-1].nome}<br>`)
+          str+='</p>'
+        })
+        if(e.note)
+          str+=`<b>Note:</b><br><p style="margin:0;margin-left:30px;white-space:pre-wrap">${e.note}</p>`
+        str+='</div>'
+      })
+      if(unique)
+        str+=`</body><div id="pageFooter"><span style="float:left">${e.nome} (${$filter('amDateFormat')(e.data,'LL')})</span><span style="float:right">{{page}}/{{pages}}</span></div>`
+      returner(str)
+    })
+  })
+  let printData=async (name,filename,emergences)=>{
+    let unique=emergences.length==1
+    PAGE=`<html><head><style>html{zoom:1/*par Windows*//*0.7 par Linux*/}</style><head><body><h1>${name}</h1>`
+    for(i=0;i<emergences.length;++i)
+      PAGE += await displayE(emergences[i],unique)
+    if(!unique)
+      PAGE+=`</body><div id="pageFooter"><span style="float:left">${name} (${$filter('amDateFormat')(Date.now(),'LL')})</span><span style="float:right">{{page}}/{{pages}}</span></div>`
+    PAGE+='</html>'
+    windower.pdfTempUri(`${filename}.pdf`,PAGE,{format:'A4',border:'1.5cm',header:{height:'1cm',contents:'<div style="text-align:center">Protezione Civile di '+db.get_pref('Gruppo','stringa')+'</div>'},footer:{height:'1cm'}},(uri)=>windower.PdfWindow({width:900, height:700, title:name , devTools:false, darkTheme:true,vibrancy:'dark'},false,uri))
+  }
+  $scope.printEmergency=async e=>printData(`Resoconto emergenza ${e.nome} (${e.data})`,`${e.nome}@${$filter('amDateFormat')(e.data,'LL')}`,[e])
+  $scope.advancedSearch=()=>{
+    $scope.$parent.storicoRiepilogo=true
+    getDataService.listEmergenzeAdvanced($scope.advancedQueries,a=>{
+      $scope.emergenze=a.e
+      $scope.Ainterventi=a.i
+      $scope.emergenza=$scope.intervento=null
+      $scope.advancedReady=true
+      $scope.$digest()
+    })
+  }
+  $scope.printResume=async ()=>printData(`Resoconto ricerca ${$scope.advancedQueries.what} ${$scope.advancedQueries[$scope.advancedQueries.what].nome}`,`${$scope.advancedQueries.what}.${$scope.advancedQueries[$scope.advancedQueries.what].nome}@${Date.now()}`,$filter('filter')($filter('filter')($scope.emergenze,$scope.filterDateE),$scope.model.q))
+}])
 app.controller("SettingsController", ['$scope','getDataService','locals','setDataService','$uibModalInstance',function($scope,getDataService,locals,setDataService,$uibModalInstance) {
   $scope.data={}
   $scope.set=(col)=>{db.set_pref(col,$scope.data[col].val);$scope.data[col].saved=true}
@@ -509,185 +710,3 @@ app.controller("SettingsController", ['$scope','getDataService','locals','setDat
   }*/
 
 }])
-app.controller("StoricoController", ['$scope','getDataService','leafletData','$filter',($scope,getDataService,leafletData,$filter)=>{
-  $scope.emergenza=null
-  $scope.intervento=null
-  $scope.emergenze=[]
-  $scope.markers={}
-  $scope.advancedReady=false
-  $scope.advancedUnready=()=>$scope.advancedReady=false
-  $scope.advancedQueries={what:null,Volontario:null,Attrezzatura:null,Mezzo:null}
-  var __async_update=callback=>{
-    $scope.emergenza=$scope.intervento=null
-    $scope.$parent.storicoRiepilogo=false
-    $scope.$parent.advancedStoricoView=false
-    getDataService.listEmergenze(e=>{$scope.emergenze=e;callback(e)})
-  }
-  var update=()=>__async_update(()=>{$scope.advancedReady=false;$scope.$digest()})
-  var getInterventi=(eid)=>getDataService.listInterventi(eid,(i)=>{$scope.interventi=createReturnMarkers(i);$scope.$digest()})
-  update()
-  $scope.$on('open.storicoView', ()=>update())
-  $scope.setEmergenza=id=>{
-    __last_gotoi=null
-    $scope.intervento=null
-    $scope.emergenza=id
-    if(!$scope.storicoRiepilogo)
-      getInterventi(id)
-    else
-      $scope.interventi=createReturnMarkers($scope.Ainterventi[id])
-  }
-  $scope.setIntervento=id=>$scope.intervento=id
-  $scope.reopenEmergency=id=>{
-    dialog.showMessageBox(mainWindow,{type:"warning", buttons:['Annulla','RIAPRI'], defaultId:1, title:'Conferma riapertura', message:'Premendo su RIAPRI riaprirai l\'emergenza', detail:'Questa operazione è irreversibile: l\'emergenza risulaterà non essere mai stata chiusa'},function(r){
-      if(r==1)
-        db.reopenE(id,()=>update())
-    })
-  }
-  function createReturnMarkers(interventi){
-    $scope.markers={}
-    interventi.forEach(function(e,i){
-      $scope.markers[e.id]={
-        lat: e.x,
-        lng: e.y,
-        title:e.nome,
-        focus: false,
-        draggable: false,
-        icon: e.fine==undefined?$scope.__utils.blue_icon:$scope.__utils.gray_icon,
-        fine:e.fine
-      }
-    })
-    leafletData.getMap('storicoMap').then((map)=>map._onResize())
-    return interventi
-  }
-  var __last_gotoi=null
-  $scope.gotoi=function(id){
-    if(__last_gotoi!=null){
-      $scope.markers[__last_gotoi].icon=$scope.markers[__last_gotoi].fine==undefined?$scope.__utils.blue_icon:$scope.__utils.gray_icon}
-    __last_gotoi=id
-    $scope.markers[id].icon=$scope.__utils.red_icon
-    $scope.center.lat=$scope.markers[id].lat
-    $scope.center.lng=$scope.markers[id].lng
-  }
-  $scope.filterDateE=(e, i, array)=>{
-    if (!$scope.model.fy)
-      return true
-    if (parseInt($filter('date')(e.data, 'y'))<=$scope.model.y)
-    if (e.chiusura===null||parseInt($filter('date')(e.chiusura, 'y'))>=$scope.model.y)
-      return true
-    return false
-  }
-
-  //let encodeHTML=str=>str.replace(/[\u00A0-\u9999<>\&]/gim, (i)=>'&#'+i.charCodeAt(0)+';')
-  let displayE=(e,unique)=>new Promise(returner=>{
-    str=`<h1><small>Emergenza:</small> ${e.nome}</h1><h2>Apertura: ${$filter('amDateFormat')(e.data,'LL')}<br>Chiusura: ${e.chiusura===null?'---':$filter('amDateFormat')(e.chiusura,'LL')}</h2><hr>`
-    getDataService.listInterventi(e.id,list=>{
-      list.forEach((e)=>{
-        str+=`<div style="margin-top:30px"><big><b>Intervento: ${e.nome} (${e.tipo})</b></big><table>`
-        str+=`<tr><td>Segnalazione:</td><td>${$filter('amDateFormat')(e.seg,'LL')}</td></tr>`
-        str+=`<tr><td>Presa in carico:</td><td>${e.inizio===null?'---':$filter('amDateFormat')(e.inizio,'LL')}</td></tr>`
-        str+=`<tr><td>Chiusura:</td><td>${e.fine===null?'---':$filter('amDateFormat')(e.fine,'LL')}</td></tr></table>`
-        str+=`<i>${e.indirizzo} - ${e.contatto}</i><br>`
-        str+=`Coordinate: ${$filter('todeg')(e.x)}, ${$filter('todeg')(e.y)}<br>`
-        ;[['Volontari',e.volontari,$scope.volontari],['Attrezzatura',e.attrezzatura,$scope.attrezzatura],['Mezzi',e.mezzi,$scope.mezzi]].forEach((e)=>{
-          str+='<b>'+e[0]+':</b><br><p style="margin:0;margin-left:30px">'
-          e[1].forEach((id)=>str+=`${e[2][id-1].nome}<br>`)
-          str+='</p>'
-        })
-        str+='</div>'
-      })
-      if(unique)
-        str+=`</body><div id="pageFooter"><span style="float:left">${e.nome} (${$filter('amDateFormat')(e.data,'LL')})</span><span style="float:right">{{page}}/{{pages}}</span></div>`
-      returner(str)
-    })
-  })
-  let printData=async (name,filename,emergences)=>{
-    let unique=emergences.length==1
-    PAGE=`<html><head><style>html{zoom:1/*par Windows*//*0.7 par Linux*/}</style><head><body><h1>${name}</h1>`
-    for(i=0;i<emergences.length;++i)
-      PAGE += await displayE(emergences[i],unique)
-    if(!unique)
-      PAGE+=`</body><div id="pageFooter"><span style="float:left">${name} (${$filter('amDateFormat')(Date.now(),'LL')})</span><span style="float:right">{{page}}/{{pages}}</span></div>`
-    PAGE+='</html>'
-    windower.pdfTempUri(`${filename}.pdf`,PAGE,{format:'A4',border:'1.5cm',header:{height:'1cm',contents:'<div style="text-align:center">Protezione Civile di '+db.get_pref('Gruppo','stringa')+'</div>'},footer:{height:'1cm'}},(uri)=>windower.PdfWindow({width:900, height:700, title:name , devTools:false, darkTheme:true,vibrancy:'dark'},false,uri))
-  }
-  $scope.printEmergency=async e=>printData(`Resoconto emergenza ${e.nome} (${e.data})`,`${e.nome}@${$filter('amDateFormat')(e.data,'LL')}`,[e])
-  $scope.advancedSearch=()=>{
-    $scope.$parent.storicoRiepilogo=true
-    getDataService.listEmergenzeAdvanced($scope.advancedQueries,a=>{
-      $scope.emergenze=a.e
-      $scope.Ainterventi=a.i
-      $scope.emergenza=$scope.intervento=null
-      $scope.advancedReady=true
-      $scope.$digest()
-    })
-  }
-  $scope.printResume=async ()=>printData(`Resoconto ricerca ${$scope.advancedQueries.what} ${$scope.advancedQueries[$scope.advancedQueries.what].nome}`,`${$scope.advancedQueries.what}.${$scope.advancedQueries[$scope.advancedQueries.what].nome}@${Date.now()}`,$filter('filter')($filter('filter')($scope.emergenze,$scope.filterDateE),$scope.model.q))
-}])
-app.factory('getDataService', function(){
-  let __update=async ($scope,callback)=>{
-    $scope.tipi = await db.get('tipo')
-    $scope.volontari = await db.get('volontario')
-    $scope.attrezzatura = await db.get('attrezzatura')
-    $scope.mezzi = await db.get('mezzo')
-    typeof callback === 'function' && callback()
-  }
-  let __getE=($scope,callback)=>
-    db.getE(false,r=>{$scope.emergenze=r;typeof callback === 'function' && callback(r)})
-  return {
-    init:function($scope,callback){
-      $scope.center={
-        zoom:db.get_pref('zoom','intero'),
-        lat:db.get_pref('lat','decimale'),
-        lng:db.get_pref('lng','decimale')
-      }
-      $scope.tipi=[]
-      $scope.volontari=[]
-      $scope.attrezzatura=[]
-      $scope.mezzi=[]
-      __update($scope,()=>__getE($scope,callback))
-    },
-    update:__update,
-    getEmergenze:__getE,
-    listEmergenze:db.getAllE,
-    listEmergenzeAdvanced:(a,callback)=>db.getAdvancedEI([a.what,a[a.what]],callback),
-    listInterventi:db.getIByE,
-    getResources:async ($scope,callback)=>{$scope.arrays=[await db.getR('tipo'),await db.getR('volontario'),await db.getR('attrezzatura'),await db.getR('mezzo')];typeof callback === 'function' && callback()}
-  }
-})
-app.factory('setDataService', function(){
-  let __editListI=(i,list,fnc)=>Promise.all(list.map(e=>new Promise(resolve =>
-    fnc(['volontario','attrezzatura','mezzo'][e[0]],i,e[1],resolve))
-  ))
-  let addListI=(i,list)=>__editListI(i,list,db.setUse)
-  let removeListI=(i,list)=>__editListI(i,list,db.unsetUse)
-  return {
-    editResources:async function(res,callback){
-      await db.setR('tipo',res[0])
-      await db.setR('volontario',res[1])
-      await db.setR('attrezzatura',res[2])
-      await db.setR('mezzo',res[3])
-      callback()
-    },
-    addIntervento:(nome,indirizzo,contatto,x,y,e,tipo,mezzo,vol,attr)=>
-      db.addI(nome,indirizzo,contatto,x,y,e,tipo,id=>{
-        if(mezzo!=undefined)
-          mezzo.forEach(function(e){
-            db.setUse('mezzo',id,e.value.id)
-          })
-        if(vol!=undefined)
-          vol.forEach(function(e){
-            db.setUse('volontario',id,e.value.id)
-          })
-        if(attr!=undefined)
-          attr.forEach(function(e){
-            db.setUse('attrezzatura',id,e.value.id)
-          })
-      }),
-      editIntervento:async (id,tipo,indirizzo,contatto,added,removed,callback)=>{
-        await db.editI(id,indirizzo,contatto,tipo)
-        await removeListI(id,removed)
-        await addListI(id,added)
-        callback()
-      }
-    }
-})

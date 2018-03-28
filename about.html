@@ -12,10 +12,13 @@
 </head>
 <body>
   <h1>Gestione emergenze Protezione Civile</h1>
-  <h4> v 0.1.0 </h4>
+  <h4 id="version"> controllo la versione... </h4>
   <h3>Mappa: Friuli - Venezia Giulia</h3>
   <h3>Sviluppato da <a target="_blank" href="http://dakation.altervista.org" >Davide Peressoni</a></h3>
   © Davide Peressoni<br>
   Per informazioni: <a href="mailto:dpdmancul+gestioneemergenzeinfo@gmail.com">dpdmancul@gmail.com</a>
+  <script>
+		document.getElementById('version').innerHTML='versione '+require('./package').version
+  </script>
 </body>
 </html>

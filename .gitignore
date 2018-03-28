@@ -3,3 +3,5 @@ satellitare/
 gestione-emergenze-protezione-civile-*-*/
 installer/
 node_modules/
+renderer.js
+app/Home/app.html
