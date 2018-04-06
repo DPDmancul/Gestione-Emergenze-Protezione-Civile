@@ -57,7 +57,7 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
   }
 
   function resetMarkers(){
-    $scope.markers={}
+		$scope.markers={};
     $scope.emergenze.forEach(function(ep,i){
       ep.interventi.forEach(function(e,j){
         $scope.markers[ep.id+'@'+e.id]={
@@ -162,8 +162,12 @@ app.controller("HomeController",['$scope','$uibModal','leafletData','getDataServ
   }
   $scope.saveMoveI=function(write){
     if(write)
-      db.moveI($scope.MOVER.iid,$scope.markers[$scope.MOVER.id].lat,$scope.markers[$scope.MOVER.id].lng,()=>getDataService.getEmergenze($scope,()=>{$scope.saveMoveI(false);$scope.$digest()}))
+			return db.moveI($scope.MOVER.iid,$scope.markers[$scope.MOVER.id].lat,$scope.markers[$scope.MOVER.id].lng,()=>getDataService.getEmergenze($scope,()=>{
+				$scope.markers={};$scope.$digest() //a coventin par fa capî a Leaflet che i marcadôrs a cambiin.
+				$scope.saveMoveI(false);$scope.$digest()
+			}))
     $scope.MOVER.id=false
+    __temp_marker=null
     createMarkers()
     movingI=false
   }

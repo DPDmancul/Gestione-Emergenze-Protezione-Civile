@@ -233,7 +233,7 @@ exports.setR=function(table,data,callback){
   promise = Promise.all(data.map(e=>promiser(returner=>{
     if(e.id==-1){
       if(e.flag=='r')
-        returner(false)
+        return returner(false)
       exports.add(table,e.nome,returner)
     }else
       switch(e.flag){
