@@ -167,13 +167,18 @@ Qui si potrà:
 ** Compilazione
 La compilazione di questo programma è gestita da =npm=.
 
+Per installare le dipendenze lanciare:
+#+begin_src sh
+npm install
+#+end_src
+
 Per testare questo programma dare:
 #+begin_src sh
 npm test
 #+end_src
 Per generare l'eseguibile installabile:
 #+begin_src sh
-npm build
+npm run build
 #+end_src
 
 ** Prerequisiti
