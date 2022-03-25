@@ -181,6 +181,20 @@ Per generare l'eseguibile installabile:
 npm run build
 #+end_src
 
+I limiti della cartografia vanno impostati nel file app/Home/MapController.js:
+#+begin_src js
+$scope.maxbounds={
+  southWest: {
+    lat: 45.5275,
+    lng: 11.7279
+  },
+  northEast: {
+    lat: 46.6984,
+    lng: 14.5184
+  }
+}
+#+end_src
+
 ** Prerequisiti
 Per poter eseguire questo programma è necessario un server MySQL.
 
@@ -188,8 +202,9 @@ Per poter eseguire questo programma è necessario un server MySQL.
 1. Avviare =gepc_0.1.1_installer_x64.exe=;
 2. Al termine verrà segnalato erroneamente un errore: premere "close" e chiudere l'applicazione;
 3. Installare la cartografia:
-   a. Scaricare (ad esempio da [[https://github.com/species/osm-tiledownloader][Open Street Maps]]) la zona desiderata
-   b. Inserirla nelle cartelle "stradale" e "satellitare" nella cartella in cui è stato installato il programma.
+   a. Scaricare (ad esempio da [[https://github.com/species/osm-tiledownloader][Open Street Maps]][fn:: Bisogna scegliere il server da cui scaricare le tiles con l'argomento --url (qui un elenco dei server: https://wiki.openstreetmap.org/wiki/Tiles e https://wiki.openstreetmap.org/wiki/Aerial_imagery).
+Inoltre coi parametri --min-zoom e --max-zoom si deve impostare i livelli di zoom da scaricare (ad esempio 13 e 14 per il satellitare e da 12 a 15 per lo stradale). Con i parametri --top, --bottom, --left e --right si restringe la zona da scaricare (qui si possono trovare i valori: https://www.openstreetmap.org/export)]) la zona desiderata
+   b. Inserirla nelle cartelle "stradale" e "satellitare" nella cartella in cui è stato installato il programma (=C:\Users\nome_utente\AppData\Local\gestione-emergenze-protezione-civile=).
 4. Al primo avvio verranno chiesti i dati di connessione al database MySQL.
 
 [[*Indice][Torna all'indice]]
