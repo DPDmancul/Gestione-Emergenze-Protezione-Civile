@@ -221,7 +221,13 @@ Qui si potrà:
 
 ## Compilazione
 
-La compilazione di questo programma è gestita da `npm`.
+La compilazione di questo programma è gestita da `npm` (node 18).
+
+Un ambiente completo di sviluppo è disponibile mediante docker:
+
+```sh
+docker-compose run --rm dev
+```
 
 Per installare le dipendenze lanciare:
 

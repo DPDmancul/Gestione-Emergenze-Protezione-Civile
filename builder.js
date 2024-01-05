@@ -14,7 +14,7 @@ const minify = require('gulp-uglify/composer')(require('uglify-es'),console)
 		platform:'win32',
 		icon:'icon.ico',
 		packageManager:'npm',
-		ignore:[/\/c:/,/\.directory/,/\/installer\//,/\/app\/.*\.js/,/^((?!node_modules\/).)*\/builder.js/,/^((?!node_modules\/).)*\/gulp.js/,/\/satellitare\//,/\/stradale\//],
+		ignore:[/\/c:/,/\.directory/,/\/installer\//,/\/app\/.*\.js/,/^((?!node_modules\/).)*\/builder.js/,/^((?!node_modules\/).)*\/gulp.js/,/\/satellitare\//,/\/stradale\//,/[Dd]ocker/],
 		afterCopy:[(buildPath,electronVersion,platform,arch,callback)=>{
 			console.log(buildPath)
 			gulp.src(buildPath+'/*.js').pipe(minify()).on('error', e=>{console.log(e);throw e}).pipe(gulp.dest(buildPath))
