@@ -157,7 +157,7 @@ Le risorse gestibili sono:
 1. Aggiunta risorse
 
    Per aggiungere una risorsa scrivere il nome nella casella di testo
-   nella sezione adeguata, successivamente premere il tasto \~Invio\] o
+   nella sezione adeguata, successivamente premere il tasto `Invio` o
    il pulsante blu `+`. Al termine premere il pulsante verde
    `Salva`.
 

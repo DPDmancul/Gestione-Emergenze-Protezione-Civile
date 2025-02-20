@@ -4,8 +4,8 @@
   "description": "Applicazione per gestire gli interventi delle emergenze in ambito di Protezione Civile",
   "main": "main.js",
   "scripts": {
-    "test": "node gulp.js; electron .",
-    "build": "node gulp.js; node builder.js",
+    "test": "node gulp.js && electron .",
+    "build": "node gulp.js && node builder.js",
     "start": "electron ."
   },
   "keywords": [
